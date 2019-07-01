@@ -1,0 +1,5 @@
+node_modules/
+!.eslintrc.js
+
+modules/testrail-reporter/types/mocha/index.d.ts
+modules/testrail-reporter/dist
