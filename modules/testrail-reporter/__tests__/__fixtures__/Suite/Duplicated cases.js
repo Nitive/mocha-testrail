@@ -1,8 +1,8 @@
-describe('Case', () => {
-  it('Step', () => {})
+testcase('Case', () => {
+  step('Step', () => {})
 })
 
-describe('Case', () => {
-  it('Step 1', () => {})
-  it('Step 2', () => {})
+testcase('Case', () => {
+  step('Step 1', () => {})
+  step('Step 2', () => {})
 })

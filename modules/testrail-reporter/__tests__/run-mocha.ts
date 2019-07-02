@@ -8,6 +8,9 @@ const fixture = (name: string) => path.join(fixturesDir, `${name}.js`)
 process.on('message', (message: { type: 'RUN_MOCHA'; testFileNames: string[] }) => {
   if (message.type === 'RUN_MOCHA') {
     const mocha = new Mocha()
+
+    mocha.ui('@nitive/mocha-testrail-ui')
+
     message.testFileNames.forEach(file => {
       mocha.addFile(fixture(file))
     })

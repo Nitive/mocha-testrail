@@ -1,3 +1,3 @@
-describe('Case', () => {
-  it('Step', () => {})
+testcase('Case', () => {
+  step('Step', () => {})
 })
