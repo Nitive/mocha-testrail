@@ -1,21 +1,22 @@
-/* eslint-disable global-require */
 /* eslint-disable func-names */
 const Test = require('mocha/lib/test')
+const commonInterface = require('mocha/lib/interfaces/common')
 
 /**
- * BDD-style interface:
+ * TestRail-style interface:
  *
- *      describe('Array', function() {
- *        describe('#indexOf()', function() {
- *          it('should return -1 when not present', function() {
- *            // ...
- *          });
  *
- *          it('should return the index when present', function() {
- *            // ...
- *          });
- *        });
- *      });
+ * ```js
+ *  testcase('Authorization', function() {
+ *    step('go to main page', function() {
+ *      // ...
+ *    });
+ *
+ *    expected('should have auth form with email and password fields', function() {
+ *      // ...
+ *    });
+ *  });
+ * ```
  *
  * @param {Suite} suite Root suite.
  */
@@ -23,7 +24,7 @@ module.exports = function bddInterface(rootSuite) {
   const suites = [rootSuite]
 
   rootSuite.on('pre-require', function(context, file, mocha) {
-    const common = require('mocha/lib/interfaces/common')(suites, context, mocha)
+    const common = commonInterface(suites, context, mocha)
 
     context.before = common.before
     context.after = common.after
