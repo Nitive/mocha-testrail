@@ -19,24 +19,24 @@ const Test = require('mocha/lib/test')
  *
  * @param {Suite} suite Root suite.
  */
-module.exports = function bddInterface(suite) {
-  const suites = [suite]
+module.exports = function bddInterface(rootSuite) {
+  const suites = [rootSuite]
 
-  suite.on('pre-require', function(context, file, mocha) {
+  rootSuite.on('pre-require', function(context, file, mocha) {
     const common = require('mocha/lib/interfaces/common')(suites, context, mocha)
 
     context.before = common.before
     context.after = common.after
     context.beforeEach = common.beforeEach
     context.afterEach = common.afterEach
-    context.run = mocha.options.delay && common.runWithSuite(suite)
+    context.run = mocha.options.delay && common.runWithSuite(rootSuite)
+
+    /**
+     * testcase
+     */
 
     context.testcase = function(title, fn) {
-      return common.suite.create({
-        title,
-        file,
-        fn,
-      })
+      return common.suite.create({ title, file, fn })
     }
 
     context.testcase.skip = function(title, fn) {
@@ -46,6 +46,10 @@ module.exports = function bddInterface(suite) {
     context.testcase.only = function(title, fn) {
       return common.suite.only({ title, file, fn })
     }
+
+    /**
+     * step
+     */
 
     context.step = function(title, fn) {
       const currentSuite = suites[0]
@@ -70,14 +74,18 @@ module.exports = function bddInterface(suite) {
       context.retries(n)
     }
 
+    /**
+     * expected
+     */
+
     context.expected = function(title, fn) {
-      const currentSuite = suites[0]
-      if (currentSuite.isPending()) {
+      const suite = suites[0]
+      if (suite.isPending()) {
         fn = null
       }
       const test = new Test(title, fn)
       test.file = file
-      currentSuite.addTest(test)
+      suite.addTest(test)
       return test
     }
 
