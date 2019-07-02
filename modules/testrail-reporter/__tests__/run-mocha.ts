@@ -24,9 +24,11 @@ process.on('message', (message: { type: 'RUN_MOCHA'; testFileNames: string[] }) 
       suitePrefix: 'Autotest: ',
     })
 
+    mocha.allowUncaught()
+
     mocha.run(failures => {
       if (process.send) {
-        process.send({ type: 'MOCHA_RUN_COMPLETE' })
+        process.send({ type: 'MOCHA_RUN_COMPLETE', failures })
       }
       process.exit(failures)
     })

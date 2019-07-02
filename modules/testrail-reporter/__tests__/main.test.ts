@@ -46,6 +46,11 @@ async function runTestFiles(
         destroy(new Error(`Unexpected message ${JSON.stringify(message, null, 2)}`))
       })
 
+      child.on('close', code => {
+        if (code !== 0) {
+          destroy(new Error('Unexpected exit'))
+        }
+      })
       child.on('error', destroy)
     })
   })
@@ -105,6 +110,48 @@ describe('testrail-reporter', () => {
       cases: [],
     }
     expect(normalizeState(serverState)).toEqual(expectedState)
+  })
+
+  it('should create suite, section and case with step.only', async () => {
+    const serverState = await runTestFiles(['Suite/Only step'])
+
+    const expectedState: DeepPartial<ServerState> = {
+      suites: [{ id: 1, name: 'Suite' }],
+      sections: [{ id: 1, name: 'Only step', suite_id: 1, parent_id: null }],
+      cases: [{ id: 1, title: 'Autotest: Case', section_id: 1, suite_id: 1 }],
+    }
+    expect(normalizeState(serverState)).toEqual(expectedState)
+
+    const expectedSteps: DeepPartial<TestRail.Case[]> = [
+      {
+        title: 'Autotest: Case',
+        custom_steps_separated: [
+          {
+            content: 'Step',
+          },
+        ],
+      },
+    ]
+    expect(getSteps(serverState)).toEqual(expectedSteps)
+  })
+
+  it('should create suite, section and case with step.skip', async () => {
+    const serverState = await runTestFiles(['Suite/Skip step'])
+
+    const expectedState: DeepPartial<ServerState> = {
+      suites: [{ id: 1, name: 'Suite' }],
+      sections: [{ id: 1, name: 'Skip step', suite_id: 1, parent_id: null }],
+      cases: [{ id: 1, title: 'Autotest: Case', section_id: 1, suite_id: 1 }],
+    }
+    expect(normalizeState(serverState)).toEqual(expectedState)
+
+    const expectedSteps: DeepPartial<TestRail.Case[]> = [
+      {
+        title: 'Autotest: Case',
+        custom_steps_separated: [],
+      },
+    ]
+    expect(getSteps(serverState)).toEqual(expectedSteps)
   })
 
   it('should not create duplicates', async () => {
@@ -228,16 +275,33 @@ describe('testrail-reporter', () => {
     expect(getRuns(serverState)).toEqual(expectedState)
   })
 
-  it.skip('should create expected state in step', async () => {
-    const serverState = await runTestFiles(['Suite/Expected'])
+  it('should create expected state in step', async () => {
+    const serverState = await runTestFiles(['Suite/Step and expected'])
 
     const expectedState: DeepPartial<TestRail.Case[]> = [
       {
-        title: '',
+        title: 'Autotest: Case',
         custom_steps_separated: [
           {
             content: 'Step',
             expected: 'Expected',
+          },
+        ],
+      },
+    ]
+    expect(getSteps(serverState)).toEqual(expectedState)
+  })
+
+  it('should create a few expected states in step', async () => {
+    const serverState = await runTestFiles(['Suite/Step and 3 expected'])
+
+    const expectedState: DeepPartial<TestRail.Case[]> = [
+      {
+        title: 'Autotest: Case',
+        custom_steps_separated: [
+          {
+            content: 'Step',
+            expected: 'Expected\n\nExpected 2\n\nExpected 3',
           },
         ],
       },

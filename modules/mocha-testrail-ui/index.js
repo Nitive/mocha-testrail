@@ -65,7 +65,7 @@ module.exports = function bddInterface(rootSuite) {
       const test = new Test(title, fn)
       test.file = file
       currentSuite.addTest(test)
-      return test
+      return withType('step', test)
     }
 
     context.step.only = function(title, fn) {
@@ -92,7 +92,7 @@ module.exports = function bddInterface(rootSuite) {
       const test = new Test(title, fn)
       test.file = file
       suite.addTest(test)
-      return test
+      return withType('expected', test)
     }
 
     context.expected.only = function(title, fn) {

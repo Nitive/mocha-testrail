@@ -1,0 +1,3 @@
+testcase('Case', () => {
+  expected('Expected', () => {})
+})

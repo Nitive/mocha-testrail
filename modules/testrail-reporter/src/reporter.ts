@@ -63,6 +63,12 @@ function getSuiteType(suite: Suite): 'testcase' | undefined {
   return type === 'testcase' ? type : undefined
 }
 
+function getTestType(test: Test): 'step' | 'expected' | undefined {
+  const type = (test as any).testRailType
+
+  return ['step', 'expected'].includes(type) ? type : undefined
+}
+
 export class MochaTestRailReporter {
   public constructor(runner: Runner, options: { reporterOptions: ReporterOptions }) {
     const state: TestRunData = {
@@ -106,9 +112,22 @@ export class MochaTestRailReporter {
     })
 
     runner.on('pass', test => {
+      const type = getTestType(test)
       const testcase: TestCase | undefined = test.parent && (test.parent as any).testRailCase
-      if (testcase) {
+
+      if (!type || !testcase) {
+        return
+      }
+
+      if (type === 'step') {
         testcase.steps.push({ status: 'passed', content: test.title })
+      } else {
+        const prevStep = testcase.steps[testcase.steps.length - 1]
+        if (!prevStep) {
+          throw new Error('expected() should be after step() or another expected()')
+        }
+
+        prevStep.expected = [prevStep.expected, test.title].filter(Boolean).join('\n\n')
       }
     })
 
