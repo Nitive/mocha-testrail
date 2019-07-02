@@ -33,7 +33,14 @@ export interface Message {
   reporterOptions: Required<ReporterOptions>
 }
 
+export type RunMode =
+  | 'do_nothing' /** Do nothing */
+  | 'create_cases' /** Create test cases and suites and sections for them. All tests will be skiped */
+  | 'publish_ran_tests' /** Create run with ran cases and publish results */
+  | 'publish_run' /** Take run from TestRail and run cases from it */
+
 export interface ReporterOptions extends TestRailApiOptions {
   testsRootDir: string
   casePrefix?: string
+  mode?: RunMode
 }

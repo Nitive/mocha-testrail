@@ -32,7 +32,7 @@ async function runTestFiles(
         reject(err)
       }
 
-      child.send({ type: 'RUN_MOCHA', testFileNames })
+      child.send({ type: 'RUN_MOCHA', testFileNames, mode: 'publish_ran_tests' })
       child.on('message', message => {
         if (message.type === 'MOCHA_RUN_COMPLETE') {
           Axios.get(`http://localhost:${port}/server-state`)
@@ -46,11 +46,6 @@ async function runTestFiles(
         destroy(new Error(`Unexpected message ${JSON.stringify(message, null, 2)}`))
       })
 
-      child.on('close', code => {
-        if (code !== 0) {
-          destroy(new Error('Unexpected exit'))
-        }
-      })
       child.on('error', destroy)
     })
   })
@@ -275,6 +270,83 @@ describe('testrail-reporter', () => {
     expect(getRuns(serverState)).toEqual(expectedState)
   })
 
+  it('should include failed step in results', async () => {
+    const serverState = await runTestFiles(['Suite/Failed in step'])
+
+    const expectedState: DeepPartial<(TestRail.Run & { results: TestRail.Result[] })[]> = [
+      {
+        id: 1,
+        name: 'Test run',
+        results: [
+          {
+            case_id: 1,
+            status_id: TestRail.ResultStatus.Failed,
+            custom_step_results: [
+              {
+                status_id: TestRail.ResultStatus.Failed,
+                content: 'Failed Step',
+                actual: 'Error: Error!',
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    expect(getRuns(serverState)).toEqual(expectedState)
+  })
+
+  it('should include failed expected in results', async () => {
+    const serverState = await runTestFiles(['Suite/Failed in expected'])
+
+    const expectedState: DeepPartial<(TestRail.Run & { results: TestRail.Result[] })[]> = [
+      {
+        id: 1,
+        name: 'Test run',
+        results: [
+          {
+            case_id: 1,
+            status_id: TestRail.ResultStatus.Failed,
+            custom_step_results: [
+              {
+                status_id: TestRail.ResultStatus.Failed,
+                content: 'Step',
+                expected: 'Failed expected',
+                actual: 'Error: Error!',
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    expect(getRuns(serverState)).toEqual(expectedState)
+  })
+
+  it('should include failed second expected in results', async () => {
+    const serverState = await runTestFiles(['Suite/Failed in second expected'])
+
+    const expectedState: DeepPartial<(TestRail.Run & { results: TestRail.Result[] })[]> = [
+      {
+        id: 1,
+        name: 'Test run',
+        results: [
+          {
+            case_id: 1,
+            status_id: TestRail.ResultStatus.Failed,
+            custom_step_results: [
+              {
+                status_id: TestRail.ResultStatus.Failed,
+                content: 'Step',
+                expected: 'Expected\n\nFailed expected',
+                actual: 'Error: Error!',
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    expect(getRuns(serverState)).toEqual(expectedState)
+  })
+
   it('should create expected state in step', async () => {
     const serverState = await runTestFiles(['Suite/Step and expected'])
 
@@ -304,6 +376,18 @@ describe('testrail-reporter', () => {
             expected: 'Expected\n\nExpected 2\n\nExpected 3',
           },
         ],
+      },
+    ]
+    expect(getSteps(serverState)).toEqual(expectedState)
+  })
+
+  it('should create steps for failed', async () => {
+    const serverState = await runTestFiles(['Suite/Section'])
+
+    const expectedState: DeepPartial<TestRail.Case[]> = [
+      {
+        title: 'Autotest: Case',
+        custom_steps_separated: [{ content: 'Step' }],
       },
     ]
     expect(getSteps(serverState)).toEqual(expectedState)

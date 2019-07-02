@@ -86,7 +86,7 @@ export interface AddRunBody {
   milestone_id?: boolean //	The ID of the milestone to link to the test run
   assignedto_id?: boolean //	The ID of the user the test run should be assigned to
   include_all?: boolean //	True for including all test cases of the test suite and false for a custom case selection (default: true)
-  case_ids?: string[] //	An array of case IDs for the custom case selection
+  case_ids?: number[] //	An array of case IDs for the custom case selection
 }
 
 export enum ResultStatus {
@@ -100,6 +100,7 @@ export enum ResultStatus {
 export interface StepResult {
   status_id: ResultStatus
   content: string
+  expected?: string
   actual?: string
 }
 

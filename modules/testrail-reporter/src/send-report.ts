@@ -125,29 +125,33 @@ function createHelpers(api: TestRailApi, reporterOptions: Required<ReporterOptio
 
   async function publishTestResults(results: CreateSuitesResult[]) {
     await runSequentialy(results, async ({ suite }) => {
+      const cases = getCases(results)
       const run = await api.addRun({
         suite_id: suite.id,
         name: 'Test run',
-        include_all: true,
+        include_all: false,
+        case_ids: cases.map(testcase => testcase.case.id),
       })
-
-      const cases = getCases(results)
 
       await api.addResultsForCases({
         runId: run.id,
-        results: cases.map(testcase => ({
-          case_id: testcase.case.id,
-          status_id: testcase.result.every(r => r.status === 'passed')
-            ? TestRail.ResultStatus.Passed
-            : TestRail.ResultStatus.Failed,
-          custom_step_results: testcase.result.map(step => ({
-            status_id:
-              step.status === 'passed'
-                ? TestRail.ResultStatus.Passed
-                : TestRail.ResultStatus.Failed,
-            content: step.content,
-          })),
-        })),
+        results: cases.map(
+          (testcase): TestRail.Result => ({
+            case_id: testcase.case.id,
+            status_id: testcase.result.every(r => r.status === 'passed')
+              ? TestRail.ResultStatus.Passed
+              : TestRail.ResultStatus.Failed,
+            custom_step_results: testcase.result.map(step => ({
+              status_id:
+                step.status === 'passed'
+                  ? TestRail.ResultStatus.Passed
+                  : TestRail.ResultStatus.Failed,
+              content: step.content,
+              expected: step.status === 'passed' ? undefined : step.expected,
+              actual: step.status === 'passed' ? step.expected : step.actual,
+            })),
+          }),
+        ),
       })
     })
   }
@@ -159,18 +163,32 @@ async function sendCompleteEvent() {
   await Axios.post(`http://localhost:${process.env.TESTRAIL_REPORTER_MOCK_SERVER_PORT}/complete`)
 }
 
+function log(message: string) {
+  if (!process.env.TESTRAIL_REPORTER_TEST) {
+    // eslint-disable-next-line no-console
+    console.log(message)
+  }
+}
+
 async function main(message: Message) {
   if (message.type === 'SEND_REPORT') {
     const api = new TestRailApi(message.reporterOptions)
     const { completedTestsInfo } = message
     const { createSuites, publishTestResults } = createHelpers(api, message.reporterOptions)
 
+    const startTime = Date.now()
+    log('Publishing test results in TestRail...')
     const results = await createSuites(completedTestsInfo.suites)
-    await publishTestResults(results)
+    if (message.reporterOptions.mode === 'publish_ran_tests') {
+      await publishTestResults(results)
+    }
 
     if (process.env.TESTRAIL_REPORTER_TEST) {
       await sendCompleteEvent()
     }
+
+    const timeDiff = Date.now() - startTime
+    log(`Done in ${Math.floor(timeDiff / 1000)} seconds`)
 
     return
   }

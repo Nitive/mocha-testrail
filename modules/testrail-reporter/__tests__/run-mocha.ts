@@ -1,11 +1,12 @@
 import * as Mocha from 'mocha'
 import * as path from 'path'
 import { MochaTestRailReporter } from '../src/reporter'
+import { RunMode, ReporterOptions } from '../src/types'
 
 const fixturesDir = path.join(__dirname, '../../__tests__/__fixtures__')
 const fixture = (name: string) => path.join(fixturesDir, `${name}.js`)
 
-process.on('message', (message: { type: 'RUN_MOCHA'; testFileNames: string[] }) => {
+process.on('message', (message: { type: 'RUN_MOCHA'; testFileNames: string[]; mode: RunMode }) => {
   if (message.type === 'RUN_MOCHA') {
     const mocha = new Mocha()
 
@@ -15,14 +16,16 @@ process.on('message', (message: { type: 'RUN_MOCHA'; testFileNames: string[] }) 
       mocha.addFile(fixture(file))
     })
 
-    mocha.reporter(MochaTestRailReporter as any, {
+    const options: ReporterOptions = {
+      mode: message.mode,
       testsRootDir: fixturesDir,
-      domain: 'csssrtest.testrail.io',
-      username: 'samoilowmaxim@gmail.com',
-      apiToken: process.env.TESTRAIL_TOKEN,
+      domain: 'company.testrail.io',
+      username: 'email@email.com',
+      apiToken: '',
       projectId: 1,
-      suitePrefix: 'Autotest: ',
-    })
+    }
+
+    mocha.reporter(MochaTestRailReporter as any, options)
 
     mocha.allowUncaught()
 

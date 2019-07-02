@@ -3,7 +3,12 @@
 import * as childProcess from 'child_process'
 import { Runner, Suite, Test } from 'mocha'
 import * as path from 'path'
+import stripAnsi from 'strip-ansi'
 import { Message, ReporterOptions, TestRunData, TestSection, TestSuite, TestCase } from './types'
+
+function formatError(err: Error) {
+  return stripAnsi(err.toString())
+}
 
 function createSuite(state: TestRunData, name: string): TestSuite {
   const suite = state.suites.find(s => s.name === name)
@@ -75,9 +80,14 @@ export class MochaTestRailReporter {
       suites: [],
     }
 
-    const reporterOptions = {
+    const reporterOptions: Required<ReporterOptions> = {
       casePrefix: 'Autotest: ',
+      mode: 'do_nothing',
       ...options.reporterOptions,
+    }
+
+    if (reporterOptions.mode === 'do_nothing') {
+      return
     }
 
     runner.on('suite', suite => {
@@ -90,6 +100,10 @@ export class MochaTestRailReporter {
         getSuiteType(suite) !== 'testcase'
       ) {
         return
+      }
+
+      if (reporterOptions.mode === 'create_cases') {
+        suite.pending = true
       }
 
       const filePathInfo = path.parse(suite.file.replace(options.reporterOptions.testsRootDir, ''))
@@ -128,10 +142,39 @@ export class MochaTestRailReporter {
         }
 
         prevStep.expected = [prevStep.expected, test.title].filter(Boolean).join('\n\n')
+        prevStep.actual = prevStep.expected
       }
     })
 
+    runner.on('fail', (test, err) => {
+      const type = getTestType(test)
+      const testcase: TestCase | undefined = test.parent && (test.parent as any).testRailCase
+
+      if (!type || !testcase) {
+        return
+      }
+
+      if (type === 'step') {
+        testcase.steps.push({ status: 'failed', content: test.title, actual: formatError(err) })
+      } else {
+        const prevStep = testcase.steps[testcase.steps.length - 1]
+        if (!prevStep) {
+          throw new Error('expected() should be after step() or another expected()')
+        }
+
+        prevStep.status = 'failed'
+        prevStep.expected = [prevStep.expected, test.title].filter(Boolean).join('\n\n')
+        prevStep.actual = formatError(err)
+      }
+    })
+
+    // end event is called twice (fixed only in mocha@6)
+    // https://github.com/mochajs/mocha/pull/3715
+    let ended = false
     runner.on('end', () => {
+      if (ended) return
+      ended = true
+
       const child = childProcess.fork(`${__dirname}/send-report.js`)
       const message: Message = {
         type: 'SEND_REPORT',
