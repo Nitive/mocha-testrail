@@ -2,6 +2,11 @@
 const Test = require('mocha/lib/test')
 const commonInterface = require('mocha/lib/interfaces/common')
 
+function withType(type, suiteOrTest) {
+  suiteOrTest.testRailType = type
+  return suiteOrTest
+}
+
 /**
  * TestRail-style interface:
  *
@@ -37,15 +42,15 @@ module.exports = function bddInterface(rootSuite) {
      */
 
     context.testcase = function(title, fn) {
-      return common.suite.create({ title, file, fn })
+      return withType('testcase', common.suite.create({ title, file, fn }))
     }
 
     context.testcase.skip = function(title, fn) {
-      return common.suite.skip({ title, file, fn })
+      return withType('testcase', common.suite.skip({ title, file, fn }))
     }
 
     context.testcase.only = function(title, fn) {
-      return common.suite.only({ title, file, fn })
+      return withType('testcase', common.suite.only({ title, file, fn }))
     }
 
     /**

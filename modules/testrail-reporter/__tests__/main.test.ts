@@ -85,6 +85,28 @@ describe('testrail-reporter', () => {
     expect(normalizeState(serverState)).toEqual(expectedState)
   })
 
+  it('should create suite, section and case with testcase.only', async () => {
+    const serverState = await runTestFiles(['Suite/Section with only'])
+
+    const expectedState: DeepPartial<ServerState> = {
+      suites: [{ id: 1, name: 'Suite' }],
+      sections: [{ id: 1, name: 'Section with only', suite_id: 1, parent_id: null }],
+      cases: [{ id: 1, title: 'Autotest: Case', section_id: 1, suite_id: 1 }],
+    }
+    expect(normalizeState(serverState)).toEqual(expectedState)
+  })
+
+  it('should not create suite, section and case with testcase.skip', async () => {
+    const serverState = await runTestFiles(['Suite/Section with skip'])
+
+    const expectedState: DeepPartial<ServerState> = {
+      suites: [],
+      sections: [],
+      cases: [],
+    }
+    expect(normalizeState(serverState)).toEqual(expectedState)
+  })
+
   it('should not create duplicates', async () => {
     const serverState = await runTestFiles(['Suite/Two cases'])
 

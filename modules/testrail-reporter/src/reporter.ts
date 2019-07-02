@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 
 import * as childProcess from 'child_process'
-import { Runner } from 'mocha'
+import { Runner, Suite, Test } from 'mocha'
 import * as path from 'path'
 import { Message, ReporterOptions, TestRunData, TestSection, TestSuite, TestCase } from './types'
 
@@ -57,6 +57,12 @@ function createCase(section: TestSection, title: string): TestCase {
   return testcase
 }
 
+function getSuiteType(suite: Suite): 'testcase' | undefined {
+  const type = (suite as any).testRailType
+
+  return type === 'testcase' ? type : undefined
+}
+
 export class MochaTestRailReporter {
   public constructor(runner: Runner, options: { reporterOptions: ReporterOptions }) {
     const state: TestRunData = {
@@ -69,7 +75,14 @@ export class MochaTestRailReporter {
     }
 
     runner.on('suite', suite => {
-      if (!suite.file || suite.root || !suite.parent || !suite.title) {
+      if (
+        !suite.file ||
+        suite.root ||
+        !suite.parent ||
+        !suite.title ||
+        suite.pending ||
+        getSuiteType(suite) !== 'testcase'
+      ) {
         return
       }
 

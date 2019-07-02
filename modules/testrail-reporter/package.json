@@ -12,6 +12,7 @@
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
     "jest": "^24.8.0",
+    "lodash": "^4.17.11",
     "mocha": "^5.2.0",
     "ts-essentials": "^2.0.11",
     "typescript": "^3.5.2"
@@ -19,7 +20,6 @@
   "dependencies": {
     "@nitive/mocha-testrail-ui": "*",
     "axios": "^0.19.0",
-    "lodash": "^4.17.11",
     "mocha": "^5.2.0"
   }
 }
