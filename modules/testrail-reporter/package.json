@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "main": "index.js",
   "license": "MIT",
+  "files": [
+    "index.js",
+    "dist/src/**/*.js"
+  ],
   "devDependencies": {
     "@types/body-parser": "^1.17.0",
     "@types/express": "^4.17.0",

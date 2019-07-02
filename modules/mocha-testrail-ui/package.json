@@ -4,6 +4,11 @@
   "main": "index.js",
   "typings": "./index.d.ts",
   "license": "MIT",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "eslint.js"
+  ],
   "dependencies": {
     "mocha": "^5.2.0"
   }
