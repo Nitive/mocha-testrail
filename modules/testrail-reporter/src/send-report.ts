@@ -188,7 +188,7 @@ async function main(message: Message) {
     }
 
     const timeDiff = Date.now() - startTime
-    log(`Done in ${Math.floor(timeDiff / 1000)} seconds`)
+    log(`Published in ${Math.floor(timeDiff / 1000)} seconds`)
 
     return
   }
