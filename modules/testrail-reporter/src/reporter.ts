@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 
 import * as childProcess from 'child_process'
-import { Runner, Suite, Test } from 'mocha'
+import { Runner, Suite, Test, reporters } from 'mocha'
 import * as path from 'path'
 import stripAnsi from 'strip-ansi'
 import { Message, ReporterOptions, TestRunData, TestSection, TestSuite, TestCase } from './types'
@@ -83,8 +83,21 @@ export class MochaTestRailReporter {
     const reporterOptions: Required<ReporterOptions> = {
       casePrefix: 'Autotest: ',
       mode: 'do_nothing',
+      additionalReporter: 'base',
+      additionalReporterOptions: {},
       ...options.reporterOptions,
     }
+
+    const AdditionalReporter =
+      typeof reporterOptions.additionalReporter === 'string'
+        ? reporters[reporterOptions.additionalReporter]
+        : reporterOptions.additionalReporter
+
+    // eslint-disable-next-line no-new
+    new AdditionalReporter(runner, {
+      ...options,
+      reporterOptions: reporterOptions.additionalReporterOptions,
+    })
 
     if (reporterOptions.mode === 'do_nothing') {
       return
