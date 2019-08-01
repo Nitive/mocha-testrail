@@ -41,8 +41,33 @@ module.exports = function bddInterface(rootSuite) {
      * testcase
      */
 
+    const failedFiles = []
+
     context.testcase = function(title, fn) {
-      return withType('testcase', common.suite.create({ title, file, fn }))
+      const suite = common.suite.create({ title, file, fn })
+
+      suite.beforeAll((browser, done) => {
+        if (failedFiles.includes(file)) {
+          suite.pending = true
+        }
+
+        done()
+      })
+
+      suite.afterEach((browser, done) => {
+        if (suite.tests.find(test => test.state === 'failed')) {
+          failedFiles.push(file)
+          suite.tests.forEach(test => {
+            if (test.status === undefined) {
+              test.pending = true
+            }
+          })
+        }
+
+        done()
+      })
+
+      return withType('testcase', suite)
     }
 
     context.testcase.skip = function(title, fn) {
