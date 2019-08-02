@@ -177,7 +177,7 @@ async function main(message: Message) {
     const { createSuites, publishTestResults } = createHelpers(api, message.reporterOptions)
 
     const startTime = Date.now()
-    log('Publishing test results in TestRail...')
+    log('Publishing test results to TestRail...')
     const results = await createSuites(completedTestsInfo.suites)
     if (message.reporterOptions.mode === 'publish_ran_tests') {
       await publishTestResults(results)
