@@ -42,7 +42,16 @@ module.exports = function bddInterface(rootSuite) {
      */
 
     context.testcase = function(title, fn) {
-      const suite = common.suite.create({ title, file, fn })
+      // хак для before/after хуков
+      const fnWithGlobalHook = () => {
+        if (global.runInTestcaseBody) {
+          global.runInTestcaseBody()
+        }
+
+        fn()
+      }
+
+      const suite = common.suite.create({ title, file, fn: fnWithGlobalHook })
 
       suite.afterEach(function beforeEachHook(browser, done) {
         let isSuiteFailed = false
